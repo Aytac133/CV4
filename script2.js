@@ -85,8 +85,15 @@ function enableEditing() {
   const editableElements = document.querySelectorAll('.sidebar p, .sidebar li, .content p');
   editableElements.forEach(el => {
     el.setAttribute('contenteditable', 'true');
+    el.classList.add('editable');
+  });
+
+  // Enter basılarsa və ya fokus itərsə, avtomatik yadda saxla + yoxla
+  editableElements.forEach(el => {
+    el.addEventListener('blur', validateAndSave); // fokus itəndə yoxla və saxla
   });
 }
+
 function disableEditing() {
   const elements = document.querySelectorAll('.editable');
   elements.forEach(function(element) {
@@ -94,3 +101,56 @@ function disableEditing() {
       element.style.border = 'none';  // Sərhədi silir
   });
 }
+
+function saveToLocalStorage() {
+  const editableElements = document.querySelectorAll('.sidebar p, .sidebar li, .content p');
+  const data = [];
+
+  editableElements.forEach((el, index) => {
+    data.push({ index, content: el.innerText });
+  });
+
+  localStorage.setItem('cvData', JSON.stringify(data));
+  alert('Məlumat yadda saxlanıldı!');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const storedData = JSON.parse(localStorage.getItem('cvData'));
+  if (storedData) {
+    const editableElements = document.querySelectorAll('.sidebar p, .sidebar li, .content p');
+    storedData.forEach((item, i) => {
+      if (editableElements[i]) {
+        editableElements[i].innerText = item.content;
+      }
+    });
+  }
+});
+
+function validateAndSave() {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  let isValid = true;
+
+  const editableElements = document.querySelectorAll('.sidebar p, .sidebar li, .content p');
+
+  editableElements.forEach(el => {
+    el.style.border = 'none'; // əvvəlki xəta sərhədini sil
+    const text = el.innerText.trim();
+
+    if (!text) {
+      el.style.border = '2px solid red';
+      isValid = false;
+    }
+
+    if (text.includes('@') && !emailRegex.test(text)) {
+      el.style.border = '2px solid red';
+      isValid = false;
+    }
+  });
+
+  if (isValid) {
+    saveToLocalStorage();
+  } else {
+    alert("Zəhmət olmasa, bütün sahələri düzgün doldurun.");
+  }
+}
+
